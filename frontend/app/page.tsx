@@ -14,7 +14,6 @@ export default function Home() {
     confidence: number;
   } | null>(null);
 
-
   const handleImageUpload = (
     file: File,
     setImage: (file: File) => void,
@@ -26,6 +25,22 @@ export default function Home() {
       setPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleResetImage = (
+    setImage: (file: File | null) => void,
+    setPreview: (url: string) => void
+  ) => {
+    setImage(null);
+    setPreview("");
+  };
+
+  const handleReset = () => {
+    setImage1(null);
+    setImage2(null);
+    setPreview1("");
+    setPreview2("");
+    setResult(null);
   };
 
   const handleCompare = async () => {
@@ -57,25 +72,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center justify-center bg-gray-50">
-      <main className="w-full max-w-4xl">
-        {/* 标题部分 */}
+      <main className="w-full max-w-3xl">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold mb-2 text-black">犬鼻纹识别系统</h1>
           <p className="text-gray-600">上传两张狗鼻子的照片，系统将判断是否为同一只狗</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col items-center relative">
             <label
-              className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white hover:border-blue-500 transition-colors cursor-pointer"
+              className="w-[300px] h-[300px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white hover:border-blue-500 transition-colors cursor-pointer relative group"
               htmlFor="image1"
             >
               {preview1 ? (
-                <img
-                  src={preview1}
-                  alt="预览图1"
-                  className="max-h-full max-w-full object-contain"
-                />
+                <div className="w-full h-full flex items-center justify-center relative">
+                  <img
+                    src={preview1}
+                    alt="预览图1"
+                    className="w-[250px] h-[250px] object-contain"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleResetImage(setImage1, setPreview1);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-50 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
               ) : (
                 <div className="text-center p-4">
                   <p className="text-gray-500">点击上传第一张图片</p>
@@ -94,17 +119,28 @@ export default function Home() {
             />
           </div>
 
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center relative">
             <label
-              className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white hover:border-blue-500 transition-colors cursor-pointer"
+              className="w-[300px] h-[300px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white hover:border-blue-500 transition-colors cursor-pointer relative group"
               htmlFor="image2"
             >
               {preview2 ? (
-                <img
-                  src={preview2}
-                  alt="预览图2"
-                  className="max-h-full max-w-full object-contain"
-                />
+                <div className="w-full h-full flex items-center justify-center relative">
+                  <img
+                    src={preview2}
+                    alt="预览图2"
+                    className="w-[250px] h-[250px] object-contain"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleResetImage(setImage2, setPreview2);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-50 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
               ) : (
                 <div className="text-center p-4">
                   <p className="text-gray-500">点击上传第二张图片</p>
@@ -124,7 +160,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex justify-center gap-4">
           <button
             className={`bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed`}
             onClick={handleCompare}
@@ -132,10 +168,18 @@ export default function Home() {
           >
             {loading ? "比对中..." : "开始比对"}
           </button>
+
+          <button
+            className={`w-[128px] bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed`}
+            onClick={handleReset}
+            disabled={loading || (!image1 && !image2 && !result)}
+          >
+            重置
+          </button>
         </div>
 
         <div className="mt-12 p-6 bg-white rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">比对结果</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black">比对结果</h2>
           {result ? (
             <div>
               <p className="text-lg">

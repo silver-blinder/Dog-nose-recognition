@@ -1,29 +1,51 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
 import { spawn } from "child_process";
 import path from "path";
-import { mkdir } from "fs/promises";
+import { createClient } from "@supabase/supabase-js";
 
-async function ensureUploadDir() {
-  try {
-    await mkdir("./public/uploads", { recursive: true });
-  } catch (error) {
-    console.error("Failed to create uploads directory:", error);
-  }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+async function getNextFolderNumber(): Promise<string> {
+  const { data: folders } = await supabase.storage.from("Dog noses").list();
+
+  // 过滤出数字文件夹并获取最大编号
+  const numbers = folders
+    ?.map((folder) => {
+      const match = folder.name.match(/^(\d{3})$/);
+      return match ? parseInt(match[1]) : 0;
+    })
+    .filter((num) => !isNaN(num));
+
+  const maxNumber = Math.max(0, ...(numbers || []));
+  // 格式化为 3 位数字（001, 002 等）
+  return String(maxNumber + 1).padStart(3, "0");
 }
 
-async function saveFile(file: File, filename: string) {
+async function uploadImgToSupabase(file: File, isFirst: boolean, folderNumber: string) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const filepath = path.join("./public/uploads", filename);
-  await writeFile(filepath, buffer);
-  return filepath;
+
+  const filename = `${folderNumber}/dog-nose-${isFirst ? "1" : "2"}${path.extname(file.name)}`;
+
+  const { data, error } = await supabase.storage.from("Dog noses").upload(filename, buffer, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) {
+    console.log(error);
+    throw new Error("Failed to upload image to Supabase");
+  }
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("Dog noses").getPublicUrl(data.path);
+  return publicUrl;
 }
 
 export async function POST(request: Request) {
   try {
-    await ensureUploadDir();
-
     const formData = await request.formData();
     const images = formData.getAll("images") as File[];
 
@@ -31,13 +53,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "需要上传两张图片" }, { status: 400 });
     }
 
+    const folderNumber = await getNextFolderNumber();
+
     // 保存文件
-    const image1Path = await saveFile(images[0], `${Date.now()}-1${path.extname(images[0].name)}`);
-    const image2Path = await saveFile(images[1], `${Date.now()}-2${path.extname(images[1].name)}`);
+    const [image1Url, image2Url] = await Promise.all([
+      uploadImgToSupabase(images[0], true, folderNumber),
+      uploadImgToSupabase(images[1], false, folderNumber),
+    ]);
 
     // 调用Python脚本进行比对
     return new Promise((resolve) => {
-      const pythonProcess = spawn("python", ["./model/compare.py", image1Path, image2Path]);
+      const pythonProcess = spawn("python", ["./model/compare.py", image1Url, image2Url]);
       let result = "";
 
       pythonProcess.stdout.on("data", (data) => {
