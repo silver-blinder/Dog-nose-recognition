@@ -14,7 +14,7 @@ export default function Home() {
     confidence: number;
   } | null>(null);
 
-  // 处理图片上传
+
   const handleImageUpload = (
     file: File,
     setImage: (file: File) => void,
@@ -30,7 +30,7 @@ export default function Home() {
 
   const handleCompare = async () => {
     if (!image1 || !image2) {
-      alert("请上传两张图片"); 
+      alert("请上传两张图片");
       return;
     }
 
@@ -40,7 +40,7 @@ export default function Home() {
       formData.append("images", image1);
       formData.append("images", image2);
 
-      const response = await axios.post("http://localhost:3001/api/compare", formData, {
+      const response = await axios.post("/api/compare", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
