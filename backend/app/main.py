@@ -30,7 +30,13 @@ def read_root():
 @app.post("/compare")
 async def compare_dog_noses(request: CompareRequest):
     try:
+        print(f"Received comparison request for: {request.image1_url} and {request.image2_url}")
         result = compare_images(request.image1_url, request.image2_url)
+        print(f"Comparison result: {result}")
         return result
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR in /compare: {str(e)}")
+        print(f"Traceback: {error_trace}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,5 +1,6 @@
 fastapi==0.103.1
 uvicorn==0.23.2
+numpy<2.0  # Add this line to pin NumPy to a 1.x version
 torch==2.0.1
 torchvision==0.15.2
 pillow==10.0.0
