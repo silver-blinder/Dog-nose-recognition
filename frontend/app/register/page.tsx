@@ -257,15 +257,15 @@ export default function RegisterDog() {
               <div className="space-y-4">
                 <p className="text-lg text-red-600">该狗已存在于数据库中！</p>
                 <div className="p-4 bg-gray-50 rounded-md">
-                  <h3 className="text-lg font-medium mb-2">已存在的狗狗信息：</h3>
+                  <h3 className="text-lg font-medium mb-2 text-black">已存在的狗狗信息：</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-sm text-gray-500">名字</p>
-                      <p>{result.bestMatch.dogInfo.name}</p>
+                      <p className="text-sm text-black">名字</p>
+                      <p className="text-gray-500">{result.bestMatch.dogInfo.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">性别</p>
-                      <p>
+                      <p className="text-sm text-black">性别</p>
+                      <p className="text-gray-500">
                         {result.bestMatch.dogInfo.gender === "male"
                           ? "公"
                           : result.bestMatch.dogInfo.gender === "female"
@@ -274,18 +274,18 @@ export default function RegisterDog() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">年龄</p>
-                      <p>{result.bestMatch.dogInfo.age}</p>
+                      <p className="text-sm text-black">年龄</p>
+                      <p className="text-gray-500">{result.bestMatch.dogInfo.age}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">品种</p>
-                      <p>{result.bestMatch.dogInfo.breed}</p>
+                      <p className="text-sm text-black">品种</p>
+                      <p className="text-gray-500">{result.bestMatch.dogInfo.breed}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-medium mb-4">更新狗狗信息</h3>
+                  <h3 className="text-lg font-medium mb-4 text-black">更新狗狗信息</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">名字</label>

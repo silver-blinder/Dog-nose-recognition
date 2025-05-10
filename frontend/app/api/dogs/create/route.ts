@@ -90,36 +90,34 @@ async function compareWithExistingImages(newImageUrl: string) {
 
   // 对每个现有图片进行比较
   const comparisonPromises = existingDogs.map(async (dog) => {
-    return new Promise((resolve) => {
-      const pythonProcess = spawn("python", ["./model/compare.py", newImageUrl, dog.image_url]);
-      let result = "";
-
-      pythonProcess.stdout.on("data", (data) => {
-        result += data.toString();
+    try {
+      // 使用API调用替代本地Python进程
+      const response = await fetch("http://localhost:8000/compare", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image1_url: newImageUrl,
+          image2_url: dog.image_url,
+        }),
       });
 
-      pythonProcess.stderr.on("data", (data) => {
-        console.error(`Error: ${data}`);
-      });
+      if (!response.ok) {
+        console.error(`API请求失败: ${response.status}`);
+        return { dogId: dog.id, is_same_dog: false, confidence: 0 };
+      }
 
-      pythonProcess.on("close", (code) => {
-        if (code !== 0) {
-          resolve({ dogId: dog.id, is_same_dog: false, confidence: 0 });
-          return;
-        }
-
-        try {
-          const comparison = JSON.parse(result);
-          resolve({
-            dogId: dog.id,
-            is_same_dog: comparison.is_same_dog,
-            confidence: comparison.confidence,
-          });
-        } catch {
-          resolve({ dogId: dog.id, is_same_dog: false, confidence: 0 });
-        }
-      });
-    });
+      const comparison = await response.json();
+      return {
+        dogId: dog.id,
+        is_same_dog: comparison.is_same_dog,
+        confidence: comparison.confidence,
+      };
+    } catch (error) {
+      console.error(`比较出错:`, error);
+      return { dogId: dog.id, is_same_dog: false, confidence: 0 };
+    }
   });
 
   const comparisons = await Promise.all(comparisonPromises);
