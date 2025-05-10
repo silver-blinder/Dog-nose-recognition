@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm install && pip install -r requirements.txt",
+  "framework": "nextjs"
+}
