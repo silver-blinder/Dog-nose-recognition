@@ -15,13 +15,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "缺少狗狗ID" }, { status: 400 });
     }
 
-    // 获取狗的信息
     const name = formData.get("name") as string;
     const gender = formData.get("gender") as string;
     const age = formData.get("age") as string;
     const breed = formData.get("breed") as string;
 
-    // 更新数据库中的信息
     const { data, error } = await supabase
       .from("dogs")
       .update({

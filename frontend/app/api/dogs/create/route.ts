@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
@@ -18,39 +17,45 @@ async function getAllDogNoseImages() {
   return dogsData || [];
 }
 
-async function getNextFolderNumber(): Promise<string> {
-  const { data: folders } = await supabase.storage.from("dog-noses").list();
+async function getNextImageNumber(): Promise<number> {
+  const { data: files, error } = await supabase.storage.from("dog-noses").list();
 
-  // 过滤出数字文件夹并获取最大编号
-  const numbers = folders
-    ?.map((folder) => {
-      const match = folder.name.match(/^(\d{3})$/);
-      return match ? Number.parseInt(match[1]) : 0;
+  if (error) {
+    console.error("获取文件列表失败:", error);
+    return 1;
+  }
+
+  const numbers = files
+    ?.map((file) => {
+      const match = file.name.match(/dog-nose-(\d+)\.jpg/);
+      return match ? parseInt(match[1], 10) : 0;
     })
-    .filter((num) => !Number.isNaN(num));
+    .filter((num) => !isNaN(num));
 
-  const maxNumber = Math.max(0, ...(numbers || []));
-  // 格式化为 3 位数字（001, 002 等）
-  return String(maxNumber + 1).padStart(3, "0");
+  return Math.max(0, ...(numbers || [])) + 1;
 }
 
-async function uploadImgToSupabase(file: File, folderNumber: string) {
+async function uploadImgToSupabase(file: File) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const filename = `${folderNumber}/dog-nose${path.extname(file.name)}`;
+  const nextNumber = await getNextImageNumber();
+  const filename = `dog-nose-${nextNumber}.jpg`;
 
   const { data, error } = await supabase.storage.from("dog-noses").upload(filename, buffer, {
     contentType: file.type,
     upsert: false,
   });
+
   if (error) {
     console.log(error);
     throw new Error("上传图片到 Supabase 失败");
   }
+
   const {
     data: { publicUrl },
   } = supabase.storage.from("dog-noses").getPublicUrl(data.path);
+
   return publicUrl;
 }
 
@@ -162,8 +167,7 @@ export async function POST(request: Request) {
     const breed = formData.get("breed") as string;
 
     // 先上传图片
-    const folderNumber = await getNextFolderNumber();
-    const imageUrl = await uploadImgToSupabase(noseImage, folderNumber);
+    const imageUrl = await uploadImgToSupabase(noseImage);
 
     // 与已有图片比较
     const comparisonResult = await compareWithExistingImages(imageUrl);

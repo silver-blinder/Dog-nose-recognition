@@ -22,7 +22,7 @@ async function uploadTempImage(file: File) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const filename = `temp/search-${Date.now()}${path.extname(file.name)}`;
+  const filename = `temp-search-${Date.now()}.jpg`;
 
   const { data, error } = await supabase.storage.from("dog-noses").upload(filename, buffer, {
     contentType: file.type,

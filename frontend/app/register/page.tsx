@@ -104,7 +104,6 @@ export default function RegisterDog() {
       await axios.put("/api/dogs/update", formData);
 
       alert("狗狗信息更新成功");
-      handleReset();
     } catch (error) {
       console.error("更新失败:", error);
       alert("更新失败，请重试");
