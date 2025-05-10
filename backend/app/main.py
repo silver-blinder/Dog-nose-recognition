@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -5,6 +6,9 @@ from pydantic import BaseModel
 from .model import compare_images
 
 app = FastAPI(title="狗鼻子识别API")
+
+# Add this code to handle port binding properly for Render
+port = int(os.environ.get("PORT", 8000))
 
 # 配置CORS
 app.add_middleware(

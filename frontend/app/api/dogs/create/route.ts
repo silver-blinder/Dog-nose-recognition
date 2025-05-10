@@ -92,7 +92,7 @@ async function compareWithExistingImages(newImageUrl: string) {
   const comparisonPromises = existingDogs.map(async (dog) => {
     try {
       // 使用API调用替代本地Python进程
-      const response = await fetch("http://localhost:8000/compare", {
+      const response = await fetch("https://dog-nose-recognition.onrender.com/compare", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -60,14 +60,26 @@ def load_image(image_url):
 
 def compare_images(image1_url, image2_url):
     try:
+        # Log progress to help debug
+        print(f"Starting comparison of {image1_url} and {image2_url}")
+        
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {device}")
         
-        # 加载模型
+        # Add explicit model path check
         model_path = os.path.join(BASE_DIR, 'model', 'siamese_network.pth')
-        model = SiameseNetwork().to(device)
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        model.eval()
+        if not os.path.exists(model_path):
+            raise Exception(f"Model file not found at {model_path}")
+        print(f"Model file exists at: {model_path}")
+        
+        # 加载模型
+        try:
+            model = SiameseNetwork().to(device)
+            model.load_state_dict(torch.load(model_path, map_location=device))
+            model.eval()
+        except Exception as e:
+            print(f"Error loading model: {str(e)}")
+            raise
         
         # 处理图片
         img1 = load_image(image1_url).to(device)
@@ -83,4 +95,9 @@ def compare_images(image1_url, image2_url):
             "confidence": round(confidence * 100, 2)
         }
     except Exception as e:
+        # More detailed error logging
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error comparing images: {str(e)}")
+        print(f"Traceback: {error_trace}")
         raise Exception(f"Error comparing images: {str(e)}")
