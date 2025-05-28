@@ -349,15 +349,15 @@ export default function RegisterDog() {
               <div className="space-y-4">
                 <p className="text-lg text-green-600">成功添加新狗狗到数据库！</p>
                 <div className="p-4 bg-gray-50 rounded-md">
-                  <h3 className="text-lg font-medium mb-2">新增狗狗信息：</h3>
+                  <h3 className="text-lg font-medium mb-2 text-black">新增狗狗信息：</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-sm text-gray-500">名字</p>
-                      <p>{result.dogInfo.name}</p>
+                      <p className="text-black">{result.dogInfo.name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">性别</p>
-                      <p>
+                      <p className="text-black">
                         {result.dogInfo.gender === "male"
                           ? "公"
                           : result.dogInfo.gender === "female"
@@ -367,11 +367,11 @@ export default function RegisterDog() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">年龄</p>
-                      <p>{result.dogInfo.age}</p>
+                      <p className="text-black">{result.dogInfo.age}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">品种</p>
-                      <p>{result.dogInfo.breed}</p>
+                      <p className="text-black">{result.dogInfo.breed}</p>
                     </div>
                   </div>
                 </div>
