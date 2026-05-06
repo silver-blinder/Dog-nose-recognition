@@ -41,19 +41,21 @@ class DogNosePrintDataset(Dataset):
 
         return img1, img2, label
 
-def evaluate_model_with_metrics(model, dataloader, criterion):
+def evaluate_model_with_metrics(model, dataloader, criterion, threshold: float = 0.5, device: torch.device | None = None):
     model.eval()
     running_loss = 0.0
     correct = 0
     total = 0
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     with torch.no_grad():
         for img1, img2, labels in dataloader:
-            img1, img2, labels = img1.cuda(), img2.cuda(), labels.cuda()
+            img1, img2, labels = img1.to(device), img2.to(device), labels.to(device)
             outputs = model(img1, img2)
             outputs = outputs.view(-1)
             loss = criterion(outputs, labels.float())
             running_loss += loss.item() * img1.size(0)
-            predicted = (outputs > 0.5).float()
+            predicted = (outputs > threshold).float()
             total += labels.size(0)
             correct += (predicted == labels.float()).sum().item()
 

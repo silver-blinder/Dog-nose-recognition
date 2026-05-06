@@ -1,0 +1,10 @@
+vary,learning_rate,batch_size,margin,backbone_trainable,final_acc,final_loss
+learning_rate,0.0001,32,1.0,False,0.8618,0.3498
+learning_rate,0.0005,32,1.0,False,0.8761,0.2928
+learning_rate,0.001,32,1.0,False,0.8815,0.2736
+learning_rate,0.005,32,1.0,False,0.8713,0.2416
+batch_size,0.001,16,1.0,False,0.8381,0.2916
+batch_size,0.001,64,1.0,False,0.864,0.288
+margin,0.001,32,0.5,False,0.8514,0.3042
+margin,0.001,32,2.0,False,0.8531,0.3074
+backbone_trainable,0.001,32,1.0,True,0.9363,0.3052
