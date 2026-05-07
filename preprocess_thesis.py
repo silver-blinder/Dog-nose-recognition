@@ -2,19 +2,20 @@
 预处理 论文.md → 论文_pandoc.md，供 Pandoc 转 Word 使用。
 原 论文.md 不做任何修改。
 
-v2 新增处理：
+v3 新增处理：
 1. 公式加章节编号 (n.m) 格式
 2. ASCII 架构/流程图代码块 → 图片引用
 3. 去掉手工目录、emoji、&emsp;、独立 --- 分割线
 4. 图片路径转绝对路径
 5. 添加 YAML front matter
+6. 保留摘要区块（中英文），转换为 Pandoc 可识别的特殊格式
 """
 import re
 import pathlib
 
-SRC  = pathlib.Path('/Users/rorschach/Workspace/personal/dog-nose-recognition/论文.md')
-DST  = pathlib.Path('/Users/rorschach/Workspace/personal/dog-nose-recognition/论文_pandoc.md')
-BASE = SRC.parent
+BASE = pathlib.Path('/Users/songjiayi4/Workspace/Dog-nose-recognition')
+SRC  = BASE / '论文.md'
+DST  = BASE / '论文_pandoc.md'
 DIAG = BASE / 'network_training/experiments/results/figures/diagrams'
 FIGS = BASE / 'network_training/experiments/results/figures'
 
@@ -24,17 +25,41 @@ text = SRC.read_text(encoding='utf-8')
 # 1. 去掉 emoji（首行 🥷）
 text = re.sub(r'^[^\S\r\n]*🥷[^\S\r\n]*\n?', '', text, flags=re.MULTILINE)
 
-# 2. 删掉手工目录区块（"## 目录" 到第一个 "## 第X章"）
+# 2. 提取摘要区块（"## 摘　要" 和 "## ABSTRACT" 到 "## 目录" 之前）
+#    保留摘要内容，转为 Heading 1 格式以便 Pandoc 处理
+abstract_cn_match = re.search(
+    r'## 摘　要\n([\s\S]*?)(?=\n## ABSTRACT)',
+    text
+)
+abstract_en_match = re.search(
+    r'## ABSTRACT\n([\s\S]*?)(?=\n## 目录)',
+    text
+)
+
+cn_abstract_body = abstract_cn_match.group(1).strip() if abstract_cn_match else ''
+en_abstract_body = abstract_en_match.group(1).strip() if abstract_en_match else ''
+
+# 3. 删掉手工目录区块（"## 目录" 到第一个 "## 第X章"）以及摘要区块
+text = re.sub(
+    r'## 摘　要\n[\s\S]*?(?=\n## 第[一二三四五六七八九]章|\n## 绪论)',
+    '',
+    text
+)
+text = re.sub(
+    r'## ABSTRACT\n[\s\S]*?(?=\n## 目录)',
+    '',
+    text
+)
 text = re.sub(
     r'## 目录\n[\s\S]*?(?=\n## 第[一二三四五六七八九]章|\n## 绪论)',
     '',
     text
 )
 
-# 3. &emsp; → 空字符串
+# 4. &emsp; → 空字符串
 text = text.replace('&emsp;', '')
 
-# 4. 独立 --- → 空行（非代码块内）
+# 5. 独立 --- → 空行（非代码块内）
 lines = text.split('\n')
 in_code = False
 cleaned = []
@@ -49,7 +74,6 @@ text = '\n'.join(cleaned)
 
 # ── 处理代码块：区分架构图 vs 代码 ────────────────────────────
 DIAGRAM_BLOCKS = [
-    # (匹配关键词, 替换为的图片路径, 图题)
     (
         r'┌─+┐.*?用户界面层.*?└─+┘',
         str(DIAG / 'fig_system_arch.png'),
@@ -67,7 +91,6 @@ DIAGRAM_BLOCKS = [
     ),
 ]
 
-# 瓶颈结构那个单行伪图（仅做代码块保留，不替换）
 SKIP_SINGLE_LINE = r'1×1 卷积.*?→.*?3×3 卷积.*?→.*?1×1 卷积'
 
 def replace_diagram_blocks(txt):
@@ -80,25 +103,21 @@ def replace_diagram_blocks(txt):
     while i < n:
         line = text_lines[i]
         if line.startswith('```'):
-            # 找到代码块结束
             lang = line[3:].strip()
             j = i + 1
             while j < n and not text_lines[j].startswith('```'):
                 j += 1
             block_content = '\n'.join(text_lines[i+1:j])
 
-            # 检查是否是架构图代码块
             replaced = False
             for kw, img_path, caption in DIAGRAM_BLOCKS:
                 if re.search(kw, block_content, re.DOTALL):
-                    # 替换为图片
                     result.append(f'\n![{caption}]({img_path})\n')
                     result.append(f'*{caption}*\n')
                     replaced = True
                     break
 
             if not replaced:
-                # 保留原代码块
                 result.append(line)
                 result.extend(text_lines[i+1:j+1])
 
@@ -111,22 +130,19 @@ def replace_diagram_blocks(txt):
 
 text = replace_diagram_blocks(text)
 
-# 5. 图片路径改为绝对路径
+# 6. 图片路径改为绝对路径
 def abs_img(m):
     alt  = m.group(1)
     path = m.group(2)
     p = pathlib.Path(path)
     if p.is_absolute() and p.exists():
         return m.group(0)
-    # 先尝试直接拼接
     candidate = BASE / path
     if candidate.exists():
         return f'![{alt}]({candidate})'
-    # 在 figures 目录下查找
     candidate2 = FIGS / p.name
     if candidate2.exists():
         return f'![{alt}]({candidate2})'
-    # diagrams 子目录
     candidate3 = DIAG / p.name
     if candidate3.exists():
         return f'![{alt}]({candidate3})'
@@ -134,8 +150,7 @@ def abs_img(m):
 
 text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', abs_img, text)
 
-# 6. 公式加章节编号
-# 扫描 ## 标题确定章号
+# 7. 公式加章节编号
 def add_equation_numbers(txt):
     lines = txt.split('\n')
     chapter = 0
@@ -148,19 +163,15 @@ def add_equation_numbers(txt):
             in_code = not in_code
 
         if not in_code:
-            # 检测章标题（## 第X章）
             m_ch = re.match(r'^##\s+第([一二三四五六七八九十]+)章', line)
             if m_ch:
                 cn_map = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10}
                 chapter = cn_map.get(m_ch.group(1), chapter + 1)
                 eq_in_chapter = 0
 
-            # 块级公式 $$...$$（单行）
             if re.match(r'^\$\$.+\$\$$', line.strip()):
                 eq_in_chapter += 1
                 label = f'({chapter}.{eq_in_chapter})'
-                # 格式：公式居中，编号右对齐，用 Pandoc 支持的表格或直接文字
-                # 方法：在公式后追加编号段落
                 result.append(line)
                 result.append(f'<div style="text-align:right">**{label}**</div>')
                 continue
@@ -171,10 +182,29 @@ def add_equation_numbers(txt):
 
 text = add_equation_numbers(text)
 
-# 7. 去掉论文标题（YAML 里已有 title）
+# 8. 去掉论文标题（YAML 里已有 title）
 text = re.sub(r'^#\s+基于孪生神经网络的犬鼻纹识别系统\s*\n', '', text)
 
-# 8. 添加 YAML front matter
+# 9. 构建摘要段落（直接用 Pandoc Div 标记，供后处理识别）
+def build_abstract_section(cn_body, en_body):
+    """构建摘要页面内容，使用 Heading 1 标记以便 post_process.py 识别"""
+    parts = []
+
+    if cn_body:
+        parts.append('# 摘　要\n')
+        parts.append(cn_body)
+        parts.append('\n')
+
+    if en_body:
+        parts.append('\n# ABSTRACT\n')
+        parts.append(en_body)
+        parts.append('\n')
+
+    return '\n'.join(parts)
+
+abstract_section = build_abstract_section(cn_abstract_body, en_abstract_body)
+
+# 10. 添加 YAML front matter
 front = (
     '---\n'
     'title: "基于孪生神经网络的犬鼻纹识别系统"\n'
@@ -186,21 +216,21 @@ front = (
     'numbersections: false\n'
     '---\n\n'
 )
-text = front + text
+text = front + abstract_section + '\n\n' + text
 
-# 9. 合并多余空行
+# 11. 合并多余空行
 text = re.sub(r'\n{4,}', '\n\n\n', text)
 
 DST.write_text(text, encoding='utf-8')
 
 # 验证原文件未被修改
 src_text = SRC.read_text(encoding='utf-8')
-assert '🥷' in src_text or True, "原文件验证"  # 原文有时有有时没有
+assert '摘　要' in src_text, "摘要应在原文件中"
 print(f'[OK] 原文件未修改: {SRC}  ({SRC.stat().st_size} bytes)')
 print(f'[OK] 中间文件: {DST}  ({len(text)} chars)')
 
-# 统计处理结果
 n_imgs  = len(re.findall(r'^!\[', text, re.MULTILINE))
 n_eqs   = len(re.findall(r'^\$\$', text, re.MULTILINE))
 n_diag  = text.count('fig_system_arch') + text.count('fig_siamese') + text.count('fig_train') + text.count('fig_query')
 print(f'    图片引用: {n_imgs}  公式: {n_eqs}  架构图已替换: {n_diag}')
+print(f'    中文摘要: {"已提取" if cn_abstract_body else "未找到"}  英文摘要: {"已提取" if en_abstract_body else "未找到"}')
