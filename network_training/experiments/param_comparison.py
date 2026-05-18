@@ -386,22 +386,42 @@ def plot_ablation(rows: List[Dict], fig_dir: Path) -> None:
 
 
 def _plot_bar_summary(rows: List[Dict], fig_dir: Path) -> None:
+    import matplotlib.font_manager as fm
+    # 尝试设置中文字体
+    chinese_fonts = ["PingFang SC", "Heiti SC", "STHeiti", "SimHei", "Microsoft YaHei", "WenQuanYi Micro Hei"]
+    available = {f.name for f in fm.fontManager.ttflist}
+    for font in chinese_fonts:
+        if font in available:
+            plt.rcParams["font.family"] = font
+            break
+    else:
+        plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["axes.unicode_minus"] = False
+
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     axes = axes.flatten()
 
     groups = ["learning_rate", "batch_size", "margin", "backbone_trainable"]
     titles = [
-        "Learning Rate",
-        "Batch Size",
-        "Contrastive Loss Margin",
-        "Backbone Fine-tuning",
+        "学习率",
+        "批大小",
+        "对比损失边界",
+        "Backbone 微调",
+    ]
+    x_label_names = [
+        "学习率",
+        "批大小",
+        "边界值",
+        "是否微调",
     ]
     colors_list = [
         plt.cm.Blues(np.linspace(0.4, 0.9, len(PARAM_GRID[g])))  # type: ignore
         for g in groups
     ]
 
-    for ax, group, title, cols in zip(axes, groups, titles, colors_list):
+    bool_label_map = {False: "冻结", True: "微调"}
+
+    for ax, group, title, x_label_name, cols in zip(axes, groups, titles, x_label_names, colors_list):
         group_rows = [r for r in rows if r["vary"] == group]
         seen_vals: Dict = {}
         for r in group_rows:
@@ -409,13 +429,16 @@ def _plot_bar_summary(rows: List[Dict], fig_dir: Path) -> None:
             if v not in seen_vals:
                 seen_vals[v] = r["final_acc"]
 
-        x_labels = [str(k) for k in seen_vals.keys()]
+        if group == "backbone_trainable":
+            x_labels = [bool_label_map.get(k, str(k)) for k in seen_vals.keys()]
+        else:
+            x_labels = [str(k) for k in seen_vals.keys()]
         y_vals = list(seen_vals.values())
 
         bars = ax.bar(x_labels, y_vals, color=cols, edgecolor="white", linewidth=0.8)
         ax.set_ylim(0.60, 1.0)
-        ax.set_xlabel(group, fontsize=10)
-        ax.set_ylabel("Test Accuracy", fontsize=10)
+        ax.set_xlabel(x_label_name, fontsize=10)
+        ax.set_ylabel("测试准确率", fontsize=10, rotation=0, labelpad=40, va="center")
         ax.set_title(title, fontsize=11, fontweight="bold")
         ax.grid(axis="y", alpha=0.3)
         for bar, val in zip(bars, y_vals):
@@ -426,7 +449,7 @@ def _plot_bar_summary(rows: List[Dict], fig_dir: Path) -> None:
             )
 
     fig.suptitle(
-        "Hyperparameter Ablation Study — Final Test Accuracy Comparison",
+        "超参数消融实验 — 最终测试准确率对比",
         fontsize=14, fontweight="bold",
     )
     fig.tight_layout()

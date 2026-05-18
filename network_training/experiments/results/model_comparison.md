@@ -28,9 +28,9 @@
 
 | Model | Closed-set Acc | Open-set Acc | Final Loss |
 |---|---:|---:|---:|
-| **Siamese-ResNet50 (Ours)** | **0.8720** | 0.8810 | 0.2661 |
-| **VGG-16 (Classifier)** | **0.7547** | 0.5000 | 0.5571 |
-| **ResNet-50 (Classifier)** | **0.8196** | 0.5000 | 0.3821 |
+| **Siamese-ResNet50 (Ours)** | **0.8823** | 0.8810 | 0.2588 |
+| **VGG-16 (Classifier)** | **0.7667** | 0.5000 | 0.5705 |
+| **ResNet-50 (Classifier)** | **0.8198** | 0.5000 | 0.3974 |
 
 ### 2.2.2 Training Curves
 
@@ -54,17 +54,17 @@ does not depend on fixed class labels.
 
 ### 2.3.1 Why Classifiers Underperform on This Task
 
-With only ~6 images per class across 1393 classes, a closed-set classifier is asked to memorise a mapping from a tiny number of examples to a very large label space. The training accuracy for classifiers can still reach near 100% (overfitting), but the generalisation gap is severe. VGG-16 reaches 0.7547 and ResNet-50 reaches 0.8196 on seen classes -- but neither can say anything useful about a new dog.
+With only ~6 images per class across 1393 classes, a closed-set classifier is asked to memorise a mapping from a tiny number of examples to a very large label space. The training accuracy for classifiers can still reach near 100% (overfitting), but the generalisation gap is severe. VGG-16 reaches 0.7667 and ResNet-50 reaches 0.8198 on seen classes -- but neither can say anything useful about a new dog.
 
 VGG-16 is also at a structural disadvantage: 138M parameters on a dataset with ~8,364 training images is an extreme overparameterisation ratio (~1 parameter per 0.06 images). Batch normalisation and dropout help, but the fundamental mismatch between model capacity and data volume limits generalisation.
 
 ### 2.3.2 Why Siamese Network Works Better
 
-The Siamese approach reformulates the task as binary similarity: given two nose-print images, are they from the same dog? This doubles the effective training signal (every pair is a training example) and does not require a fixed class label space. As a result, the Siamese Network achieves 0.8720 closed-set accuracy while *also* maintaining 0.8810 open-set accuracy -- a gap of 37.2pp over VGG-16 and the same gap over ResNet-50 classifier in the open-set setting.
+The Siamese approach reformulates the task as binary similarity: given two nose-print images, are they from the same dog? This doubles the effective training signal (every pair is a training example) and does not require a fixed class label space. As a result, the Siamese Network achieves 0.8823 closed-set accuracy while *also* maintaining 0.8810 open-set accuracy -- a gap of 38.2pp over VGG-16 and the same gap over ResNet-50 classifier in the open-set setting.
 
 ### 2.3.3 ResNet-50 Classifier vs Siamese-ResNet50
 
-Both use the same ResNet-50 backbone and ImageNet pretrained weights. The only difference is the learning objective: cross-entropy classification vs contrastive metric learning. The Siamese variant outperforms the classifier by 5.2pp on closed-set accuracy, and more importantly is the only one of the two that can handle new dogs at test time. This experiment isolates the paradigm effect, independent of architecture choice.
+Both use the same ResNet-50 backbone and ImageNet pretrained weights. The only difference is the learning objective: cross-entropy classification vs contrastive metric learning. The Siamese variant outperforms the classifier by 6.2pp on closed-set accuracy, and more importantly is the only one of the two that can handle new dogs at test time. This experiment isolates the paradigm effect, independent of architecture choice.
 
 ## 2.4 Summary
 

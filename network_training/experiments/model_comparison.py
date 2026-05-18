@@ -36,6 +36,15 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    import matplotlib.font_manager as _fm
+    # 配置中文字体（优先级：PingFang SC > Heiti TC > STHeiti > SimHei）
+    _zh_candidates = ["PingFang SC", "Heiti TC", "STHeiti", "SimHei", "Microsoft YaHei"]
+    _zh_available  = {f.name for f in _fm.fontManager.ttflist}
+    _zh_font = next((f for f in _zh_candidates if f in _zh_available), None)
+    if _zh_font:
+        matplotlib.rcParams["font.family"] = "sans-serif"
+        matplotlib.rcParams["font.sans-serif"] = [_zh_font] + matplotlib.rcParams["font.sans-serif"]
+    matplotlib.rcParams["axes.unicode_minus"] = False   # 防止负号乱码
     HAS_MPL = True
 except ImportError:
     HAS_MPL = False
@@ -224,22 +233,22 @@ def plot_model_comparison(
 
     x = np.arange(len(names))
     w = 0.35
-    bars1 = ax.bar(x - w/2, closed,  w, label="Closed-set Accuracy", color=colors, alpha=0.85, edgecolor="white")
-    bars2 = ax.bar(x + w/2, openset, w, label="Open-set Accuracy (new dogs)",
+    bars1 = ax.bar(x - w/2, closed,  w, label="闭集准确率", color=colors, alpha=0.85, edgecolor="white")
+    bars2 = ax.bar(x + w/2, openset, w, label="开放集准确率（新犬只）",
                    color=colors, alpha=0.40, edgecolor="white", hatch="//")
 
     ax.set_xticks(x)
     ax.set_xticklabels(names, fontsize=10)
     ax.set_ylim(0.40, 1.0)
-    ax.set_ylabel("Accuracy", fontsize=11)
+    ax.set_ylabel("准确率", fontsize=11)
     ax.set_title(
-        "Closed-set vs Open-set Accuracy\n"
-        "(Open-set = recognising dogs not seen during training)",
+        "闭集准确率 vs 开放集准确率\n"
+        "（开放集 = 识别训练阶段未见过的新犬只）",
         fontsize=12, fontweight="bold"
     )
     ax.legend(fontsize=9)
     ax.grid(axis="y", alpha=0.3)
-    ax.axhline(0.5, color="gray", linestyle="--", linewidth=1, alpha=0.7, label="Chance level")
+    ax.axhline(0.5, color="gray", linestyle="--", linewidth=1, alpha=0.7, label="随机猜测基线")
 
     for bar, val in zip(bars1, closed):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.008,
@@ -260,11 +269,11 @@ def plot_model_comparison(
 def _plot_radar(results: Dict[str, Dict], fig_dir: Path) -> None:
     """Comprehensive radar: Accuracy / Open-set / Param Efficiency / Inference Speed / Convergence."""
     categories = [
-        "Closed-set\nAccuracy",
-        "Open-set\nCapability",
-        "Param\nEfficiency",
-        "Inference\nSpeed",
-        "Convergence\nSpeed",
+        "闭集\n准确率",
+        "开放集\n能力",
+        "参数\n效率",
+        "推理\n速度",
+        "收敛\n速度",
     ]
     N = len(categories)
     angles = [n / float(N) * 2 * math.pi for n in range(N)]
@@ -311,7 +320,7 @@ def _plot_radar(results: Dict[str, Dict], fig_dir: Path) -> None:
     ax.set_ylim(0, 1)
     ax.set_yticks([0.25, 0.5, 0.75, 1.0])
     ax.set_yticklabels(["0.25", "0.5", "0.75", "1.0"], fontsize=8)
-    ax.set_title("Model Performance Radar\n(Metric Learning vs Classification)",
+    ax.set_title("模型综合性能雷达图\n（度量学习 vs 闭集分类）",
                  size=12, fontweight="bold", pad=20)
     ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.15), fontsize=9)
     fig.tight_layout()
