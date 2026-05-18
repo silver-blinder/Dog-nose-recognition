@@ -213,14 +213,14 @@ function SuccessView({ result, onReset }: { result: any; onReset: () => void }) 
         <h4 className="font-bold text-gray-800 mb-4">新增档案信息</h4>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "名字", value: info?.name, icon: "🏷️" },
-            { label: "性别", value: genderMap[info?.gender] ?? info?.gender, icon: "⚥" },
-            { label: "年龄", value: info?.age, icon: "📅" },
-            { label: "品种", value: info?.breed, icon: "🐕" },
+            { label: "名字", value: info?.name || null, icon: "🏷️" },
+            { label: "性别", value: genderMap[info?.gender] || null, icon: "⚥" },
+            { label: "年龄", value: info?.age || null, icon: "📅" },
+            { label: "品种", value: info?.breed || null, icon: "🐕" },
           ].map((item, i) => (
             <div key={i} className="bg-emerald-50 rounded-xl p-3">
               <p className="text-xs text-emerald-600 mb-0.5">{item.icon} {item.label}</p>
-              <p className="font-semibold text-gray-800">{item.value ?? "—"}</p>
+              <p className="font-semibold text-gray-800">{item.value ?? "-"}</p>
             </div>
           ))}
         </div>
@@ -272,10 +272,10 @@ export default function RegisterDog() {
     try {
       const formData = new FormData();
       formData.append("noseImage", noseImage);
-      formData.append("name", dogInfo.name || "未命名");
-      formData.append("gender", dogInfo.gender || "unknown");
-      formData.append("age", dogInfo.age || "未知");
-      formData.append("breed", dogInfo.breed || "未知");
+      formData.append("name", dogInfo.name || "");
+      formData.append("gender", dogInfo.gender || "");
+      formData.append("age", dogInfo.age || "");
+      formData.append("breed", dogInfo.breed || "");
       const response = await axios.post("/api/dogs/create", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });

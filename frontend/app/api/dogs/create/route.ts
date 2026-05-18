@@ -39,12 +39,11 @@ async function uploadImgToSupabase(file: File) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const nextNumber = await getNextImageNumber();
-  const filename = `dog-nose-${nextNumber}.jpg`;
+  const filename = `dog-nose-${Date.now()}.jpg`;
 
   const { data, error } = await supabase.storage.from("dog-noses").upload(filename, buffer, {
     contentType: file.type,
-    upsert: false,
+    upsert: true,
   });
 
   if (error) {
@@ -92,7 +91,7 @@ async function compareWithExistingImages(newImageUrl: string) {
   const comparisonPromises = existingDogs.map(async (dog) => {
     try {
       // 使用API调用替代本地Python进程
-      const response = await fetch("https://dog-nose-recognition.onrender.com/compare", {
+      const response = await fetch("http://127.0.0.1:8000/compare", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

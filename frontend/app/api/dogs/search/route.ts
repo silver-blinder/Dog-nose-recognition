@@ -51,7 +51,7 @@ async function compareWithExistingImages(newImageUrl: string) {
   // 对每个现有图片进行比较
   const comparisonPromises = existingDogs.map(async (dog) => {
     try {
-      const response = await fetch("https://dog-nose-recognition.onrender.com/compare", {
+      const response = await fetch("http://127.0.0.1:8000/compare", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
